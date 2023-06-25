@@ -19,5 +19,4 @@ class Service
     [PluginService] static internal CommandManager Commands { get; private set; }
     [PluginService] static internal ClientState ClientState { get; private set; }
     [PluginService] public static ToastGui Toasts { get; private set; }
-    [PluginService] static internal Framework Framework { get; private set; }
 }

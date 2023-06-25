@@ -1,9 +1,9 @@
 {
   "Name": "Auto-umbrella+",
   "Author": "maributt",
-  "Description": "Auto-umbrella+ lets you set your auto-umbrella to different parasols based on the job you're playing\nNot much configuration needed, just switch to any job you'd like and set up your auto-umbrella as you normally would!",
+  "Description": "Auto-umbrella+ lets you set your auto-umbrella to different parasols based on the gearset you're wearing\nNot much configuration needed, just switch to any job/gearset you'd like and set up your auto-umbrella as you normally would!",
   "RepoUrl": "https://github.com/maributt/auto-umbrellaplus",
-  "Punchline": "An auto-umbrella for every job!",
-  "AssemblyVersion": "23.5.8.0",
+  "Punchline": "An auto-umbrella for every job & gearset!",
+  "AssemblyVersion": "23.6.24.0",
   "IconUrl": "https://raw.githubusercontent.com/maributt/xivplugins/main/plugins/auto-umbrellaplus/images/icon.png"
 }

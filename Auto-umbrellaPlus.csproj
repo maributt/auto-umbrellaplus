@@ -22,7 +22,7 @@
 
 	<PropertyGroup>
 		<DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-		<AssemblyName>Auto-umbrellaPlus</AssemblyName>
+		<AssemblyName>auto-umbrellaplus</AssemblyName>
 		<RootNamespace>Auto_UmbrellaPlus</RootNamespace>
 	</PropertyGroup>
 
