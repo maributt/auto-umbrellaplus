@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Authors>maributt</Authors>
-		<Version>23.7.3.0</Version>
+		<Version>23.10.8.0</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
