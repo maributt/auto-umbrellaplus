@@ -11,7 +11,6 @@
         internal const string AutoUmbrellaSetSig = "E8 ?? ?? ?? ?? 84 C0 74 1E 48 8B 4F 10 0F B7 5F 44";
         internal const string AnimateIntoPoseSig = "E8 ?? ?? ?? ?? 40 0F B6 DE 45 33 C9";
         internal const string CurrentParasolCposeSig = "E8 ?? ?? ?? ?? 40 3A F0 75 19";
-        internal const string OrnamentManagerSig = "74 66 48 81 C1 ?? ?? ?? ??";
         internal const string ExecuteCommandSig = "E8 ?? ?? ?? ?? 8D 43 0A";
         internal const string PosesArraySig = "48 8D 05 ?? ?? ?? ?? 0F B6 1C 38";
         internal static string GetAvailablePosesSig = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState.Addresses.AvailablePoses.String;
