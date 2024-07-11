@@ -3,7 +3,7 @@
     internal static class Signatures
     {
         internal const string OrnamentManagerOffsetSig = "74 66 48 81 C1 ?? ?? ?? ??";
-        internal const string CurrentAutoUmbrellaOffsetSig = "45 33 C0 66 89 5F ??";
+        internal const string CurrentAutoUmbrellaOffsetSig = "45 33 C0 66 89 5E ??";
         internal const string SomeManagerOffsetSig = "4C 8B F9 48 8D A8 ?? ?? ?? ??";
         internal const string EquipGearsetSig = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B F9 41 0F B6 F0 48 8D 0D";
         internal const string ChangePoseSig = "E8 ?? ?? ?? ?? B0 01 E9 ?? ?? ?? ?? 48 8B CF 4C 89 6D C7";
