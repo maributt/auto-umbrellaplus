@@ -1,10 +1,12 @@
 ﻿using Dalamud;
+using Dalamud.Game;
 using Dalamud.Game.Gui.Toast;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using Dalamud.Plugin;
+using Dalamud.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -22,6 +24,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using static FFXIVClientStructs.FFXIV.Client.Game.Control.EmoteController;
 
 namespace Auto_UmbrellaPlus;
 public partial class Plugin : IDalamudPlugin
@@ -36,7 +39,7 @@ public partial class Plugin : IDalamudPlugin
     public string AuUsageMessage => $"Usage: {Cmd} [\"Umbrella name\"|Umbrella_id|{string.Join('|', SpecialCmds)}] [job]\nExamples:\n{Cmd} \"{ornamentSheet.GetRow(1).Singular}\" dark knight\n{Cmd} 1 DRK\n{Cmd} silent\n{CmdAlias} autoswitch\n{CmdAlias} use\n{CmdAlias}";
 
     private Configuration config;
-    private readonly DalamudPluginInterface pluginInterface;
+    private readonly IDalamudPluginInterface pluginInterface;
     private readonly ExcelSheet<Ornament> ornamentSheet;
     private readonly ExcelSheet<ClassJob> classJobSheet;
 
@@ -60,7 +63,7 @@ public partial class Plugin : IDalamudPlugin
 
 #pragma warning disable CS0649
 
-    [Signature(Signatures.OrnamentManagerOffsetSig, Offset = 0x5)]
+    [Signature(Signatures.OrnamentManagerOffsetSig, Offset = 0x7)]
     private readonly uint OrnamentManagerOffset;
 
     [Signature(Signatures.CurrentAutoUmbrellaOffsetSig, Offset = 0x6)]
@@ -73,7 +76,7 @@ public partial class Plugin : IDalamudPlugin
 
     private const uint OrnamentNoteBookId = (uint)FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentId.OrnamentNoteBook;
 
-    private delegate nint   ChangePoseDelegate(nint unk1, nint unk2);
+    private delegate nint   ExecuteEmoteDelegate(nint unk1, uint unk2, nint unk3); 
     private delegate long   EquipGearsetDelegate(nint a1, int destGearsetIndex, ushort a3);
     private delegate long   DisableAutoUmbrellaDelegate(nint MountManagerPtr);
     private delegate char   AutoUmbrellaSetDelegate(nint MountManagerPtr, uint UmbrellaId);
@@ -85,7 +88,7 @@ public partial class Plugin : IDalamudPlugin
     private static Hook<EquipGearsetDelegate>           EquipGearsetHook;
     private static Hook<DisableAutoUmbrellaDelegate>    DisableAutoUmbrellaHook;
     private static Hook<AutoUmbrellaSetDelegate>        AutoUmbrellaSetHook;
-    private static Hook<ChangePoseDelegate>             ChangePoseHook;
+    private static Hook<ExecuteEmoteDelegate>           ExecuteEmoteHook;
 
     private readonly DisableAutoUmbrellaDelegate        DisableAutoUmbrellaFn;
     private readonly AutoUmbrellaSetDelegate            AutoUmbrellaSetFn;
@@ -96,7 +99,7 @@ public partial class Plugin : IDalamudPlugin
     #endregion
 
     #region Helpers
-    private unsafe uint CurrentOrnamentId => ((FFXIVClientStructs.FFXIV.Client.Game.Character.Character*)Service.ClientState.LocalPlayer.Address)->Ornament.OrnamentId;
+    private unsafe uint CurrentOrnamentId => ((FFXIVClientStructs.FFXIV.Client.Game.Character.Character*)Service.ClientState.LocalPlayer.Address)->OrnamentData.OrnamentId;
     private uint CurrentAutoUmbrella => (uint)Marshal.ReadInt32(Service.ClientState.LocalPlayer.Address + (nint)OrnamentManagerOffset + CurrentAutoUmbrellaOffset);
 
     private uint AvailablePosesCount => GetAvailablePosesFn(PoseType.Umbrella);
@@ -106,8 +109,10 @@ public partial class Plugin : IDalamudPlugin
     private void PrintNotice(string Message) => Service.Chat.Print($"[{Name}] {Message}");
     private void PrintError(string Message) => Service.Chat.PrintError($"[{Name}] {Message}");
     private unsafe int CurrentGearsetIndex => RaptureGearsetModule.Instance()->CurrentGearsetIndex;
-    private unsafe string GearsetNameAlt(int gearsetIndex) => string.Join("", SeString.Parse(RaptureGearsetModule.Instance()->GetGearset(gearsetIndex)->Name,47).TextValue.Where(c=>(byte)c!=0));
-    private unsafe string GearsetName(int gearsetIndex) => SplitOnByte(Encoding.UTF8.GetString(RaptureGearsetModule.Instance()->GetGearset(gearsetIndex)->Name, 47), 0);
+
+    /*[Obsolete("No longer used, `NameString` is now a property of `GearsetEntry`")]
+    private unsafe string GearsetNameAlt(int gearsetIndex) => string.Join("", SeString.Parse(RaptureGearsetModule.Instance()->GetGearset(gearsetIndex)->Name,47).TextValue.Where(c=>(byte)c!=0));*/
+    private unsafe string GearsetName(int gearsetIndex) => RaptureGearsetModule.Instance()->GetGearset(gearsetIndex)->NameString;
     private static string SplitOnByte(string str, byte split)
     {
         int splitIndex = str.IndexOf((char)split);
@@ -138,7 +143,7 @@ public partial class Plugin : IDalamudPlugin
         Task.Run(() => 
         {
             Thread.Sleep(1);
-            AgentModule.Instance()->GetAgentByInternalID(agentInternalID)->Show();
+            AgentModule.Instance()->GetAgentByInternalId((AgentId)agentInternalID)->Show();
         });
     }
     private static ushort JobToColor(byte classJob)
@@ -257,21 +262,21 @@ public partial class Plugin : IDalamudPlugin
         return EquipGearsetHook.Original(a1, destGearsetIndex, a3);
     }
 
-    private nint ChangePoseDetour(nint unk1, nint unk2)
+    private nint ExecuteEmoteDetour(nint unk1, uint unk2, nint unk3)
     {
-        Service.PluginLog.Debug($"{Service.SigScanner.GetStaticAddressFromSig(Signatures.PosesArraySig):X}");
-        Service.PluginLog.Debug($"isUmbrellaEquipped: {IsUmbrellaEquipped}, CurrentOrnamentId: {CurrentOrnamentId}");
-        if (!IsUmbrellaEquipped) return ChangePoseHook.Original(unk1, unk2);
-
-        var nextCpose = (byte)((CurrentUmbrellaCpose + 1) % AvailablePosesCount+1);
+        Service.PluginLog.Debug($"{Service.SigScanner.GetStaticAddressFromSig(Signatures.PosesArraySig):X} (unk1: ${unk1}, unk2: ${unk2}, unk3: ${unk3}");
+        Service.PluginLog.Debug($"isUmbrellaEquipped: {IsUmbrellaEquipped}, CurrentOrnamentId: {CurrentOrnamentId})");
+        if (!IsUmbrellaEquipped || unk2 != 90) return ExecuteEmoteHook.Original(unk1, unk2, unk3);
+        var nextCpose = (byte)((CurrentUmbrellaCpose + 1) % (AvailablePosesCount + 1));
+        Service.PluginLog.Verbose($"CurrentUmbrellaCpose: {CurrentUmbrellaCpose}, nextCpose: {nextCpose}, CurrentGearsetIndex: {CurrentGearsetIndex}, GearsetIndexToCpose[CurrentGearsetIndex]: {config.GearsetIndexToCpose[CurrentGearsetIndex]}");
         config.GearsetIndexToCpose[CurrentGearsetIndex] = nextCpose;
         config.Save();
-        
-        return ChangePoseHook.Original(unk1, unk2);
+
+        return ExecuteEmoteHook.Original(unk1, unk2, unk3);
     }
     #endregion
 
-    public Plugin(DalamudPluginInterface PluginInterface)
+    public Plugin(IDalamudPluginInterface PluginInterface)
     {
         pluginInterface = PluginInterface;
         pluginInterface.Create<Service>();
@@ -307,7 +312,7 @@ public partial class Plugin : IDalamudPlugin
         DisableAutoUmbrellaHook     = Service.GameInteropProvider.HookFromAddress<DisableAutoUmbrellaDelegate>(DisableAutoUmbrellaPtr, DisableAutoUmbrellaDetour);
         AutoUmbrellaSetHook         = Service.GameInteropProvider.HookFromAddress<AutoUmbrellaSetDelegate>(AutoUmbrellaSetPtr, AutoUmbrellaSetDetour);
         EquipGearsetHook            = Service.GameInteropProvider.HookFromAddress<EquipGearsetDelegate>(Service.SigScanner.ScanText(Signatures.EquipGearsetSig), EquipGearsetDetour);
-        ChangePoseHook              = Service.GameInteropProvider.HookFromAddress<ChangePoseDelegate>(Service.SigScanner.ScanText(Signatures.ChangePoseSig), ChangePoseDetour);
+        ExecuteEmoteHook            = Service.GameInteropProvider.HookFromAddress<ExecuteEmoteDelegate>(Service.SigScanner.ScanText(Signatures.ExecuteEmoteSig), ExecuteEmoteDetour);
 
         if (TryGetCurrentAutoUmbrella(out var autoUmbrellaId))
         {
@@ -343,7 +348,7 @@ public partial class Plugin : IDalamudPlugin
         DisableAutoUmbrellaHook.Enable();
         AutoUmbrellaSetHook.Enable();
         EquipGearsetHook.Enable();
-        ChangePoseHook.Enable();
+        ExecuteEmoteHook.Enable();
     }
     public void Dispose()
     {
@@ -360,7 +365,7 @@ public partial class Plugin : IDalamudPlugin
         DisableAutoUmbrellaHook.Dispose();
         AutoUmbrellaSetHook.Dispose();
         EquipGearsetHook.Dispose();
-        ChangePoseHook.Dispose();
+        ExecuteEmoteHook.Dispose();
     }
 
     #region Events
@@ -511,7 +516,8 @@ public partial class Plugin : IDalamudPlugin
             PrintSetAutoUmbrella(destGearsetIndex, destParasol);
         AutoUmbrellaSet(destParasol);
     }
-    private void OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) => AppendGearsetName(ref message, ref isHandled);
+
+    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled) => AppendGearsetName(ref message, ref isHandled);
     private void OnToast(ref SeString message, ref ToastOptions options, ref bool isHandled) => AppendGearsetName(ref message, ref isHandled);
     #endregion
 

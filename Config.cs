@@ -8,14 +8,14 @@ public class Configuration : IPluginConfiguration
 {
     public int Version { get; set; } = 2;
 
-    [JsonIgnore] private DalamudPluginInterface pluginInterface;
+    [JsonIgnore] private IDalamudPluginInterface pluginInterface;
 
     public Dictionary<int, uint> GearsetIndexToParasol { get; set; } = new();
     public Dictionary<int, byte> GearsetIndexToCpose { get; set; } = new();
     public bool Silent;
     public bool AutoSwitch = true;
 
-    public void Initialize(DalamudPluginInterface PluginInterface)
+    public void Initialize(IDalamudPluginInterface PluginInterface)
     {
         pluginInterface = PluginInterface;
     }
