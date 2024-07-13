@@ -20,27 +20,19 @@
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<RepoPath Include="..\xivplugins\plugins\$(ProjectName)"/>
-	</ItemGroup>
-	<Target Name="xivrepo" AfterTargets="PostBuildEvent" Condition="Exists(@(RepoPath))">
+	<Target Name="xivrepo" AfterTargets="Build" Condition="Exists($(RepoPath))">
 		<ItemGroup>
-			<FilesToMove Include="$(ProjectDir)$(OutDir)$(ProjectName)\*.*"/>
+			<FilesToMove Include="$(ProjectDir)$(OutDir)$(AssemblyName)\*.*" />
 		</ItemGroup>
-		<Move SourceFiles="@(FilesToMove)" DestinationFolder="$(ProjectDir)..\xivplugins\plugins\$(ProjectName)" OverwriteReadOnlyFiles="true"/>
-		<ItemGroup>
-			<DeleteAssemblies Include="$(TargetDir)*.pdb" />
-			<DeleteAssemblies Include="$(TargetDir)$(AssemblyName).deps.json" />
-		</ItemGroup>
-		<Message Text="Deleting @(DeleteAssemblies)" Importance="high" />
-		<Delete Files="@(DeleteAssemblies)" />
-		<RemoveDir Directories="$(TargetDir)\ref\" />
+		<Move SourceFiles="@(FilesToMove)" DestinationFolder="$(ProjectDir)$(RepoPath)" OverwriteReadOnlyFiles="true" />
+		<Message Text="Moving to $(RepoPath)" Importance="high" />
 	</Target>
 
 	<PropertyGroup>
 		<DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
 		<AssemblyName>auto-umbrellaplus</AssemblyName>
 		<RootNamespace>Auto_UmbrellaPlus</RootNamespace>
+		<RepoPath>..\xivplugins\plugins\$(AssemblyName)</RepoPath>
 	</PropertyGroup>
 
 	<ItemGroup>
