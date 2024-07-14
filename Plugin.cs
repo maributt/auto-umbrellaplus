@@ -170,6 +170,8 @@ public partial class Plugin : IDalamudPlugin
             38 => 515,      //DNC
             39 => 9,        //RPR
             40 => 56,       //SGE
+            41 => 45,       //VPR
+            42 => 561,      //PCT
             >= 8 and <= 15 => 2,    // Crafters
             16 or 17 or 18 => 24,   // Gatherers
             _ => 0
