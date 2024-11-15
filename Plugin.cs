@@ -15,7 +15,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -236,7 +236,7 @@ public partial class Plugin : IDalamudPlugin
         if (IsAutoUmbrellaEquipped)
             ExecuteCommand(109, 0, 0, 0, 0);
         return;
-    }
+    }// hold shift = assign to all within role
     #endregion
 
     #region Detours
@@ -428,6 +428,10 @@ public partial class Plugin : IDalamudPlugin
                 AutoUmbrellaSet(Umbrella);
             else
                 DisableAutoUmbrella();
+
+            Service.PluginLog.Debug($"[/au, args=null] CurrentGearsetIndex: {CurrentGearsetIndex}, CurrentUmbrellaCpose: {CurrentUmbrellaCpose}\n" +
+                $"config.GearsetIndexToParasol[CurrentGearsetIndex]: {config.GearsetIndexToParasol[CurrentGearsetIndex]}, config.GearsetIndexToCpose[CurrentGearsetIndex]: {config.GearsetIndexToCpose[CurrentGearsetIndex]}\n" +
+                $"");
             return;
         }
 
@@ -466,7 +470,7 @@ public partial class Plugin : IDalamudPlugin
 
         if (args.Length == 0)
         {
-            CmdSetAutoUmbrella(new KeyValuePair<int, string>(CurrentGearsetIndex, GearsetName(CurrentGearsetIndex)), ornament);
+            CmdSetAutoUmbrella(new KeyValuePair<int, string>(CurrentGearsetIndex, GearsetName(CurrentGearsetIndex)), ornament.Value);
             return;
         }
             
@@ -477,7 +481,7 @@ public partial class Plugin : IDalamudPlugin
             return;
         }
 
-        CmdSetAutoUmbrella(gearsetMatches.First(), ornament);
+        CmdSetAutoUmbrella(gearsetMatches.First(), ornament.Value);
     }
     private void OnGearsetSwitch(int lastGearsetIndex, int destGearsetIndex)
     {

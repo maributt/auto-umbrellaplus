@@ -4,7 +4,7 @@
   "Description": "Auto-umbrella+ lets you set your auto-umbrella to different parasols based on the gearset you're wearing\nNot much configuration needed, just switch to any job/gearset you'd like and set up your auto-umbrella as you normally would!",
   "RepoUrl": "https://github.com/maributt/auto-umbrellaplus",
   "Punchline": "An auto-umbrella for every job & gearset!",
-  "AssemblyVersion": "24.7.12.0",
-  "DalamudApiLevel": 10,
+  "AssemblyVersion": "24.11.15.0",
+  "DalamudApiLevel": 11,
   "IconUrl": "https://raw.githubusercontent.com/maributt/xivplugins/main/plugins/auto-umbrellaplus/images/icon.png"
 }
